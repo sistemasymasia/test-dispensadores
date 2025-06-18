@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Evaluación de Personalidad</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #ffffff;
+      color: #333;
+    }
+
+    header {
+      background-color: #D4A427;
+      padding: 1rem;
+      text-align: center;
+      color: #8C1D14;
+      font-weight: bold;
+      font-size: 1.5rem;
+      line-height: 1.2;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 1rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    label, select, textarea {
+      display: block;
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+
+    select, textarea {
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button {
+      background-color: #8C1D14;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.2rem;
+      cursor: pointer;
+      font-weight: bold;
+      margin: 0.5rem;
+    }
+
+    button[type="submit"] {
+      background-color: #3399FF;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .actions {
+      text-align: center;
+    }
+
+    #mensaje {
+      text-align: center;
+      margin-top: 1rem;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    Evaluación de Personalidad <br/> para Dispensadores de Centro Médico SPANYA
+  </header>
+
+  <div class="container">
+    <div id="formulario" class="card">
+      <form id="testForm">
+
+        <div id="bloque-nombre">
+          <label for="nombre">Nombre completo del candidato:</label>
+          <textarea id="nombre" name="Nombre" required></textarea>
+          <div class="actions">
+            <button type="button" onclick="iniciarTest()">Iniciar Test</button>
+          </div>
+        </div>
+
+        <div id="bloque-instrucciones" class="hidden">
+          <p style="text-align: justify;">
+            <strong>Instrucciones:</strong><br>
+            Lee cada una de las siguientes afirmaciones y responde marcando la opción que mejor describa tu comportamiento habitual.
+          </p>
+        </div>
+
+        <input type="hidden" id="fecha" name="Fecha" />
+
+        <div id="bloques-preguntas" class="hidden">
+          <!-- Preguntas dinámicas -->
+        </div>
+
+        <div id="comentarios" class="hidden">
+          <label for="Comentario">¿Te gustaría dejarnos algún comentario? (Opcional)</label>
+          <textarea name="Comentario" id="Comentario"></textarea>
+        </div>
+
+        <div class="actions hidden" id="botones-navegacion">
+          <button type="button" id="anterior" onclick="navegar(-1)">Anterior</button>
+          <button type="button" id="siguiente" onclick="navegar(1)">Siguiente</button>
+        </div>
+
+        <div class="actions hidden" id="boton-enviar">
+          <button type="submit" id="enviarBtn">Enviar</button>
+        </div>
+
+        <div id="mensaje" class="hidden">✅ Datos enviados correctamente 🎉</div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const preguntas = [
+      "Cuando cometo un error en el trabajo, lo reconozco de inmediato.",
+      "Cumplo con las tareas que se me asignan sin que me las recuerden.",
+      "Considero importante llegar siempre puntual a mis actividades.",
+      "Si encuentro dinero u objetos perdidos en el lugar de trabajo, los entrego sin dudar.",
+      "Me aseguro de terminar todo lo que empiezo, aunque no haya supervisión.",
+      "Me gusta convencer a las personas de probar nuevos productos o servicios.",
+      "Me siento cómodo explicando a un cliente las ventajas de un producto.",
+      "Busco formas de mejorar la presentación o la oferta de los productos que vendo.",
+      "Me esfuerzo por conocer bien los productos para poder venderlos mejor.",
+      "Trato con amabilidad a todas las personas, incluso si están molestas.",
+      "Escucho con atención lo que los clientes me piden antes de responder.",
+      "Busco que los clientes se sientan cómodos y satisfechos con el servicio.",
+      "Me esfuerzo en resolver las dudas de los clientes, aunque no sea parte directa de mi tarea.",
+      "Sé mantener la calma cuando hay problemas o situaciones urgentes.",
+      "Busco soluciones prácticas cuando algo no sale como se esperaba.",
+      "Si un cliente tiene una queja, intento resolverla antes de llamar a un superior.",
+      "Me adapto fácilmente cuando cambian las actividades o prioridades del día.",
+      "Disfruto conversar con personas que no conozco.",
+      "Me siento con confianza al hablar frente a varias personas.",
+      "Prefiero trabajar solo y sin interrupciones.",
+      "Busco aprender cosas nuevas, aunque no me las pidan en el trabajo.",
+      "Propongo ideas para mejorar las actividades de la farmacia.",
+      "Me esfuerzo por entender el uso de nuevos productos o procesos antes que mis compañeros.",
+      "Trabajo bien, aunque tenga varias tareas pendientes al mismo tiempo.",
+      "Me mantengo tranquilo, aunque haya filas largas de clientes esperando."
+    ];
+
+    const opciones = ["Siempre", "Casi siempre", "A veces", "Rara vez", "Nunca"];
+    let bloqueActual = 0;
+    const totalBloques = Math.ceil(preguntas.length / 5);
+
+    function iniciarTest() {
+      const nombre = document.getElementById('nombre').value.trim();
+      if (!nombre) {
+        alert("Por favor, ingresa tu nombre.");
+        return;
+      }
+      document.getElementById('bloque-nombre').classList.add('hidden');
+      document.getElementById('bloque-instrucciones').classList.remove('hidden');
+      document.getElementById('bloques-preguntas').classList.remove('hidden');
+      document.getElementById('botones-navegacion').classList.remove('hidden');
+
+      const ahora = new Date();
+      document.getElementById('fecha').value = ahora.toISOString(); // UTC
+
+      const bloquesDiv = document.getElementById('bloques-preguntas');
+      bloquesDiv.innerHTML = '';
+
+      for (let i = 0; i < preguntas.length; i++) {
+        const label = document.createElement('label');
+        label.textContent = (i + 1) + ".- " + preguntas[i];
+        label.classList.add('pregunta');
+
+        const select = document.createElement('select');
+        select.name = "P" + (i + 1);
+        select.required = true;
+        select.classList.add('pregunta');
+
+        const empty = document.createElement('option');
+        empty.disabled = true;
+        empty.selected = true;
+        empty.value = "";
+        empty.textContent = "Selecciona una opción";
+        select.appendChild(empty);
+
+        for (const opcion of opciones) {
+          const opt = document.createElement('option');
+          opt.value = opcion;
+          opt.textContent = opcion;
+          select.appendChild(opt);
+        }
+
+        bloquesDiv.appendChild(label);
+        bloquesDiv.appendChild(select);
+      }
+      mostrarBloque(0);
+    }
+
+    function mostrarBloque(n) {
+      const items = document.querySelectorAll('.pregunta');
+      items.forEach((el, index) => {
+        el.classList.add('hidden');
+      });
+      const inicio = n * 5 * 2;
+      const fin = inicio + 10;
+      for (let i = inicio; i < fin && i < items.length; i++) {
+        items[i].classList.remove('hidden');
+      }
+      document.getElementById('anterior').style.display = n === 0 ? 'none' : '';
+      document.getElementById('siguiente').style.display = n === totalBloques - 1 ? 'none' : '';
+      document.getElementById('boton-enviar').classList.toggle('hidden', n !== totalBloques - 1);
+      document.getElementById('comentarios').classList.toggle('hidden', n !== totalBloques - 1);
+    }
+
+    function navegar(direccion) {
+      bloqueActual += direccion;
+      mostrarBloque(bloqueActual);
+    }
+
+    document.getElementById('testForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      const submitButton = document.querySelector('#enviarBtn');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Enviando...';
+
+      fetch("https://script.google.com/macros/s/AKfycbygdhf41t1tFTFwwnTjjSPCeYFvETSCPauhen089ejyvujbNcfNsaiGMXtNQuMGWJQs/exec", {
+        method: "POST",
+        body: data
+      })
+      .then(res => res.ok ? res.text() : Promise.reject(res))
+      .then(() => {
+        document.getElementById('formulario').innerHTML = '<div id="mensaje">✅ Datos enviados correctamente 🎉</div>';
+        window.scrollTo(0, 0);
+      })
+      .catch(err => {
+        alert("Ocurrió un error al enviar los datos.");
+        console.error(err);
+        submitButton.disabled = false;
+        submitButton.textContent = 'Enviar';
+      });
+    });
+  </script>
+</body>
+</html>
